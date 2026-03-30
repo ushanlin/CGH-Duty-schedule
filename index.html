@@ -3,53 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duty Schedule | 專業醫療排班系統 v3.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <title>Duty Schedule | 專業醫療排班系統 v3.2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #000000; --bg-main: #ffffff; --bg-sub: #f9fafb;
-            --border: #000000; --text-main: #000000; --sidebar-width: 260px;
+            --sidebar-width: 260px;
+            --primary: #2563eb;       /* 亮藍色強調 */
+            --primary-hover: #1d4ed8;
+            --sidebar-bg: #1e3a8a;    /* 深藍色側邊欄 */
+            --sidebar-hover: #1e40af;
+            --bg-main: #f8fafc;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background: var(--bg-main); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Sidebar */
-        .sidebar { width: var(--sidebar-width); background: #000000; color: white; display: flex; flex-direction: column; border-right: 2px solid var(--border); }
-        .sidebar-header { padding: 30px 24px; font-size: 20px; font-weight: 800; letter-spacing: 2px; border-bottom: 1px solid #374151; }
-        .nav-item { padding: 14px 24px; cursor: pointer; color: #9ca3af; font-size: 14px; transition: 0.2s; }
-        .nav-item:hover, .nav-item.active { background: #1f2937; color: white; }
-        .nav-item.active { border-left: 5px solid white; font-weight: 700; }
+        /* 左側側邊欄 - 深藍風格 */
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .sidebar-header { padding: 30px 24px; font-size: 22px; font-weight: 700; color: #bfdbfe; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav-group { flex: 1; padding: 15px 0; }
+        .nav-item { display: flex; align-items: center; padding: 14px 24px; cursor: pointer; transition: 0.2s; color: #93c5fd; font-size: 14px; border-left: 4px solid transparent; }
+        .nav-item:hover { background: var(--sidebar-hover); color: white; }
+        .nav-item.active { background: var(--sidebar-hover); color: white; border-left: 4px solid #60a5fa; font-weight: 600; }
 
-        /* Main Content */
+        /* 主要內容區 */
         .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .top-bar { height: 64px; background: white; border-bottom: 2px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
-        .content-area { flex: 1; padding: 30px; overflow: auto; background: var(--bg-sub); }
+        .top-bar { height: 64px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .content-area { flex: 1; padding: 30px; overflow: auto; }
 
-        /* UI Components */
-        .card { background: white; border: 2px solid var(--border); padding: 20px; margin-bottom: 20px; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); }
-        h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; font-weight: 800; border-bottom: 2px solid var(--border); padding-bottom: 5px; display: inline-block; }
+        /* 卡片與通用組件 */
+        .card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        h2 { font-size: 16px; margin-bottom: 15px; color: var(--text-main); font-weight: 700; }
         
-        /* Table & Calendar */
-        .calendar-wrapper { background: white; border: 2px solid var(--border); overflow: auto; max-height: 70vh; }
+        /* 表格與月曆 */
+        .calendar-wrapper { background: white; border: 1px solid var(--border); border-radius: 12px; overflow: auto; max-height: 70vh; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .calendar-grid { display: grid; position: relative; }
-        .cell { padding: 10px; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; min-height: 80px; font-size: 12px; }
-        .header-cell { background: #ffffff; font-weight: 700; position: sticky; top: 0; z-index: 20; border-bottom: 2px solid var(--border); text-align: center; }
-        .unit-cell { position: sticky; left: 0; background: #ffffff; font-weight: 700; z-index: 30; border-right: 2px solid var(--border); width: 120px; text-align: center; }
+        .cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 80px; padding: 8px; font-size: 12px; transition: background 0.1s; }
+        .cell:hover { background: #f8fafc; cursor: pointer; }
+        .header-cell { background: #f1f5f9; font-weight: 600; text-align: center; position: sticky; top: 0; z-index: 20; color: var(--text-sub); }
+        .unit-cell { position: sticky; left: 0; background: #ffffff; font-weight: 600; z-index: 30; width: 120px; display: flex; align-items: center; justify-content: center; border-right: 2px solid var(--border); }
 
         /* 單單位月曆 (7x5) */
-        .month-view { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #000; border-left: 1px solid #000; }
-        .month-day { border-right: 1px solid #000; border-bottom: 1px solid #000; min-height: 120px; padding: 10px; background: white; }
-        .month-day-num { font-weight: 800; margin-bottom: 5px; }
+        .month-view { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--border); border-radius: 12px; background: white; overflow: hidden; }
+        .month-day { min-height: 120px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px; cursor: pointer; transition: 0.1s; }
+        .month-day:hover { background: #f8fafc; }
+        .month-day-num { font-weight: 600; color: var(--text-sub); margin-bottom: 5px; }
 
-        /* Tags */
-        .doc-tag { background: white; border: 2px solid black; padding: 4px 8px; font-size: 11px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+        /* 標籤與按鈕 */
+        .doc-tag { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-top: 2px; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.1s; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: white; color: var(--text-main); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.1s; }
+        .btn-outline:hover { background: #f1f5f9; }
+        .btn-danger { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .btn-danger:hover { background: #fee2e2; }
         
-        /* Modal */
-        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; background: white; border: 2px solid black; box-shadow: 10px 10px 0px rgba(0,0,0,0.2); z-index: 1000; padding: 25px; display: none; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+        input, select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; }
+        input:focus, select:focus { border-color: var(--primary); }
 
-        .btn-primary { background: black; color: white; border: none; padding: 8px 16px; cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase; }
-        input, select { padding: 8px; border: 2px solid black; font-family: inherit; font-size: 13px; }
+        /* 彈出視窗 */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 1000; display: none; backdrop-filter: blur(2px); }
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 30px; width: 400px; z-index: 1001; display: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
     </style>
 </head>
 <body>
@@ -61,16 +78,16 @@
         <div class="nav-item" onclick="showPage('doctors', this)">👨‍⚕️ 醫師管理</div>
         <div class="nav-item" onclick="showPage('units', this)">🏢 單位管理</div>
         <div class="nav-item" onclick="showPage('settings', this)">⚙️ 天數設定</div>
-        <div class="nav-item" style="margin-top: 40px; color: #f87171;" onclick="toggleAuditModal()">📝 異動紀錄</div>
+        <div class="nav-item" style="margin-top: 40px; color: #fca5a5;" onclick="toggleAuditModal()">📝 異動紀錄</div>
     </nav>
 </aside>
 
 <div class="main-container">
     <header class="top-bar">
-        <div id="pageTitle" style="font-weight: 800; text-transform: uppercase;">班表管理</div>
-        <div id="headerTools">
-            <select id="yearSelect" onchange="updateCalendar()"><option>2026</option><option>2027</option></select> 年
-            <select id="monthSelect" onchange="updateCalendar()">
+        <div id="pageTitle" style="font-weight: 700; font-size: 18px; color: var(--sidebar-bg);">班表管理</div>
+        <div class="calendar-tools">
+            <select id="yearSelect" onchange="updateView()"><option>2026</option><option>2027</option></select> 年
+            <select id="monthSelect" onchange="updateView()">
                 <option value="0">1月</option><option value="1">2月</option><option value="2" selected>3月</option>
                 <option value="3">4月</option><option value="4">5月</option><option value="5">6月</option>
                 <option value="6">7月</option><option value="7">8月</option><option value="8">9月</option>
@@ -81,25 +98,34 @@
 
     <div class="content-area">
         <div id="page-schedule" class="page">
-            <div style="margin-bottom: 15px;">
-                <button class="btn-primary" onclick="switchView('total')">總覽列表</button>
-                <button class="btn-primary" onclick="switchView('unit')">單位月曆</button>
-                <select id="unitViewSelect" style="display:none; margin-left:10px;" onchange="renderUnitCalendar()">
-                    </select>
+            <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-outline" id="btn-total" onclick="switchView('total')">總覽列表</button>
+                    <button class="btn-outline" id="btn-unit" onclick="switchView('unit')">單位月曆</button>
+                    <select id="unitSelect" style="display:none;" onchange="updateView()"></select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-primary" onclick="autoGenerate()">⚡ 一鍵自動排班</button>
+                    <button class="btn-outline" onclick="exportCSV()">📥 匯出 CSV</button>
+                </div>
             </div>
             <div id="calendarDisplay"></div>
         </div>
 
         <div id="page-doctors" class="page" style="display:none;">
             <div class="card">
-                <h2>醫師名單查詢</h2>
-                <div style="margin-bottom: 20px;">
-                    年度選擇: <select id="yearFilter" onchange="renderDoctorList()"><option>114</option><option>115</option></select>
+                <h2>醫師名單管理</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+                    <input type="text" id="newDocName" placeholder="醫師姓名">
+                    <select id="newDocYear"></select> <select id="newDocRank">
+                        <option value="PGY1">PGY1</option><option value="PGY2">PGY2</option>
+                        <option value="R1">R1</option><option value="R2">R2</option>
+                        <option value="R3">R3</option><option value="R4">R4</option>
+                    </select>
+                    <button class="btn-primary" onclick="addDoctor()">+ 新增醫師</button>
                 </div>
-                <div style="display: flex; gap:10px; margin-bottom:20px;">
-                    <input type="text" id="newDocName" placeholder="姓名">
-                    <select id="newDocYear"><option>114</option><option>115</option></select>
-                    <button class="btn-primary" onclick="addNewDoctor()">+ 新增醫師</button>
+                <div style="margin-bottom: 15px; font-size: 14px; color: var(--text-main); font-weight: 500;">
+                    篩選學年度：<select id="yearFilter" onchange="renderDoctorList()"></select>
                 </div>
                 <div id="doctorList"></div>
             </div>
@@ -108,209 +134,390 @@
         <div id="page-units" class="page" style="display:none;">
             <div class="card">
                 <h2>單位管理</h2>
-                <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <input type="text" id="newUnitName" placeholder="新單位名稱">
-                    <button class="btn-primary" onclick="addUnit()">新增</button>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="newUnitName" placeholder="例如: CCU">
+                    <button class="btn-primary" onclick="addUnit()">新增單位</button>
                 </div>
-                <div id="unitListDisplay"></div>
+                <div id="unitListContainer"></div>
             </div>
         </div>
 
         <div id="page-settings" class="page" style="display:none;">
             <div class="card">
-                <h2>天數設定基準</h2>
-                <div id="rankSettings"></div>
+                <h2>職等預設天數設定</h2>
+                <div id="rankSettingsContainer"></div>
+                <div id="pgyCalculator" style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border); font-size:14px; color:var(--text-main);"></div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="overlay" onclick="closeDocModal()"></div>
+<div class="modal-overlay" id="modalOverlay" onclick="closeModals()"></div>
+
 <div class="modal" id="docModal">
-    <h2 id="modalDocName">醫師個人班表</h2>
-    <div id="modalDocContent" style="margin-top:20px; line-height: 1.6;"></div>
-    <button class="btn-primary" style="margin-top:20px; width:100%;" onclick="closeDocModal()">關閉</button>
+    <h2 id="modalDocName" style="margin-bottom: 15px; color: var(--primary);">醫師個人班表</h2>
+    <div id="modalDocContent" style="font-size: 14px; line-height: 1.8; max-height: 300px; overflow-y: auto;"></div>
+    <button class="btn-outline" style="width: 100%; margin-top: 20px;" onclick="closeModals()">關閉</button>
+</div>
+
+<div class="modal" id="auditModal">
+    <h2 style="margin-bottom: 15px; color: var(--primary);">📝 異動紀錄 (Audit Log)</h2>
+    <div id="auditBody" style="font-size: 12px; line-height: 1.6; max-height: 300px; overflow-y: auto; font-family: monospace;"></div>
+    <button class="btn-outline" style="width: 100%; margin-top: 20px;" onclick="closeModals()">關閉</button>
 </div>
 
 <script>
     let state = {
-        currentView: 'total', // 'total' or 'unit'
-        doctors: JSON.parse(localStorage.getItem('ds_docs_v3')) || [
-            { id: 1, name: '林醫師', rank: 'R1', year: '114', status: '在職' }
+        view: 'total', // 'total' 總覽 或 'unit' 單單位
+        doctors: JSON.parse(localStorage.getItem('ds_docs_v32')) || [
+            { name: '林醫師', year: '114', rank: 'R1' },
+            { name: '陳醫師', year: '114', rank: 'PGY1' }
         ],
-        units: JSON.parse(localStorage.getItem('ds_units_v3')) || ['CCU', 'MICU', '6西', '5東+7東'],
-        rankDays: { 'R1': 8, 'R2': 7, 'R3': 6, 'R4': 2 },
-        schedule: JSON.parse(localStorage.getItem('ds_sched_v3')) || {}
+        units: JSON.parse(localStorage.getItem('ds_units_v32')) || ['CCU', 'MICU', '6西', '5東+7東'],
+        schedule: JSON.parse(localStorage.getItem('ds_sched_v32')) || {},
+        rankDays: JSON.parse(localStorage.getItem('ds_ranks_v32')) || { 'R1': 8, 'R2': 7, 'R3': 6, 'R4': 2 },
+        logs: JSON.parse(localStorage.getItem('ds_logs_v32')) || []
     };
 
     window.onload = () => {
-        autoSetYear();
-        refreshAll();
+        initYears();
+        updateView();
     };
 
-    function autoSetYear() {
+    // --- 初始化學年度 ---
+    function initYears() {
         const now = new Date();
         const year = now.getFullYear();
-        const month = now.getMonth() + 1;
-        // 學年度邏輯：7月開始算下一年度
-        const academicYear = month >= 7 ? (year - 1911).toString() : (year - 1912).toString();
+        // 7月(包含)之後算下一個學年度。 JavaScript 的 getMonth() 是 0-11，所以 7月是 6。
+        const academicYear = now.getMonth() >= 6 ? year - 1911 : year - 1912;
+        
+        const yearOptions = [academicYear + 1, academicYear, academicYear - 1]; // 顯示未來、現在、過去
+        const html = yearOptions.map(y => `<option value="${y}">${y}學年度</option>`).join('');
+        
+        document.getElementById('newDocYear').innerHTML = html;
+        document.getElementById('yearFilter').innerHTML = html;
+        // 預設選中當前學年度
         document.getElementById('newDocYear').value = academicYear;
         document.getElementById('yearFilter').value = academicYear;
     }
 
+    // --- 頁面切換 ---
     function showPage(pageId, el) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById('page-' + pageId).style.display = 'block';
-        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
-        document.getElementById('pageTitle').innerText = el.innerText;
-        refreshAll();
+        document.getElementById('pageTitle').innerText = el.innerText.replace('📝 異動紀錄', '');
+        
+        if(pageId === 'doctors') renderDoctorList();
+        if(pageId === 'units') renderUnitList();
+        if(pageId === 'settings') renderRankSettings();
+        if(pageId === 'schedule') updateView();
     }
 
-    function switchView(view) {
-        state.currentView = view;
-        document.getElementById('unitViewSelect').style.display = (view === 'unit') ? 'inline-block' : 'none';
-        refreshAll();
+    // --- 班表視圖控制 ---
+    function switchView(v) {
+        state.view = v;
+        document.getElementById('unitSelect').style.display = (v === 'unit') ? 'block' : 'none';
+        
+        // 按鈕樣式切換
+        document.getElementById('btn-total').style.background = (v === 'total') ? '#f1f5f9' : 'white';
+        document.getElementById('btn-unit').style.background = (v === 'unit') ? '#f1f5f9' : 'white';
+        
+        updateView();
     }
 
-    function refreshAll() {
+    function updateView() {
+        const uSel = document.getElementById('unitSelect');
+        const currentSelectedUnit = uSel.value;
+        uSel.innerHTML = state.units.map(u => `<option value="${u}">${u}</option>`).join('');
+        if (state.units.includes(currentSelectedUnit)) uSel.value = currentSelectedUnit;
+
+        if(state.view === 'total') renderTotalView();
+        else renderUnitMonthView();
         save();
-        if(state.currentView === 'total') updateCalendar(); else renderUnitCalendar();
-        renderDoctorList();
-        renderUnitList();
-        renderSettings();
-        
-        // 更新單位選擇器
-        const sel = document.getElementById('unitViewSelect');
-        sel.innerHTML = state.units.map(u => `<option value="${u}">${u}</option>`).join('');
     }
 
-    // 1. 總覽列表
-    function updateCalendar() {
+    function renderTotalView() {
         const year = document.getElementById('yearSelect').value;
-        const month = parseInt(document.getElementById('monthSelect').value);
-        const days = new Date(year, month + 1, 0).getDate();
-        const grid = document.createElement('div');
-        grid.className = 'calendar-grid';
-        grid.style.gridTemplateColumns = `120px repeat(${days}, 160px)`;
+        const month = parseInt(document.getElementById('monthSelect').value) + 1;
+        const days = new Date(year, month, 0).getDate();
         
-        let html = '<div class="cell header-cell">UNIT \\ DATE</div>';
+        let html = `<div class="calendar-wrapper"><div class="calendar-grid" style="grid-template-columns: 120px repeat(${days}, 160px);">`;
+        html += '<div class="cell header-cell">單位 \\ 日期</div>';
         for(let d=1; d<=days; d++) html += `<div class="cell header-cell">${d}</div>`;
         
         state.units.forEach(u => {
             html += `<div class="cell unit-cell">${u}</div>`;
             for(let d=1; d<=days; d++) {
-                const id = `${year}-${month+1}-${d}-${u}`;
-                const name = state.schedule[id];
-                html += `<div class="cell" id="${id}" onclick="pickDoc('${id}')">${name ? `<div class="doc-tag">${name}</div>` : ''}</div>`;
+                const id = `${year}-${month}-${d}-${u}`;
+                const doc = state.schedule[id];
+                html += `<div class="cell" onclick="manualAssign('${id}')">${doc ? `<div class="doc-tag">${doc}</div>` : ''}</div>`;
             }
         });
-        document.getElementById('calendarDisplay').innerHTML = `<div class="calendar-wrapper">${grid.outerHTML.replace('</div>', html + '</div>')}</div>`;
+        document.getElementById('calendarDisplay').innerHTML = html + '</div></div>';
     }
 
-    // 2. 單位月曆 (Notion Style)
-    function renderUnitCalendar() {
+    function renderUnitMonthView() {
         const year = document.getElementById('yearSelect').value;
         const month = parseInt(document.getElementById('monthSelect').value);
-        const unit = document.getElementById('unitViewSelect').value || state.units[0];
+        const unit = document.getElementById('unitSelect').value || state.units[0];
         const firstDay = new Date(year, month, 1).getDay();
         const days = new Date(year, month + 1, 0).getDate();
 
-        let html = `<div class="month-view">`;
-        ['日','一','二','三','四','五','六'].forEach(w => html += `<div style="text-align:center;font-weight:bold;padding:10px;border-bottom:2px solid black;">${w}</div>`);
+        let html = '<div class="month-view">';
+        ['日','一','二','三','四','五','六'].forEach(w => html += `<div style="text-align:center; padding:10px; font-weight:700; border-bottom:1px solid var(--border); background:#f8fafc;">${w}</div>`);
         
-        for(let i=0; i<firstDay; i++) html += `<div class="month-day" style="background:#f9fafb;"></div>`;
+        for(let i=0; i<firstDay; i++) html += '<div class="month-day" style="background:#f1f5f9;"></div>';
         for(let d=1; d<=days; d++) {
             const id = `${year}-${month+1}-${d}-${unit}`;
-            const name = state.schedule[id];
-            html += `<div class="month-day">
-                <div class="month-day-num">${d}</div>
-                ${name ? `<div class="doc-tag">${name}</div>` : ''}
-            </div>`;
+            const doc = state.schedule[id];
+            html += `<div class="month-day" onclick="manualAssign('${id}')">
+                        <div class="month-day-num">${d}</div>
+                        ${doc ? `<div class="doc-tag">${doc}</div>` : ''}
+                    </div>`;
         }
-        document.getElementById('calendarDisplay').innerHTML = html + `</div>`;
+        document.getElementById('calendarDisplay').innerHTML = html + '</div>';
     }
 
-    // 3. 醫師管理
+    // --- 自動排班核心邏輯 (已恢復) ---
+    function autoGenerate() {
+        if(!confirm("⚠️ 警告：這將會清除當前月份的排班並重新分配，確定要執行嗎？")) return;
+
+        const year = document.getElementById('yearSelect').value;
+        const month = parseInt(document.getElementById('monthSelect').value) + 1;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const currentAcYear = document.getElementById('yearFilter').value; // 只抓目前畫面上篩選的學年度醫師
+
+        // 1. 清空當月
+        for(let key in state.schedule) {
+            if(key.startsWith(`${year}-${month}-`)) delete state.schedule[key];
+        }
+
+        // 2. 篩選當年度醫師
+        const activeDocs = state.doctors.filter(d => d.year === currentAcYear);
+        const rDocs = activeDocs.filter(d => ['R1','R2','R3'].includes(d.rank));
+        const pgyDocs = activeDocs.filter(d => d.rank.includes('PGY'));
+
+        if(activeDocs.length === 0) {
+            alert(`找不到 ${currentAcYear} 學年度的醫師名單，請先至醫師管理新增！`);
+            return;
+        }
+
+        // 3. 分配 R1-R3 (固定天數 + 不連班)
+        rDocs.forEach(doc => {
+            let target = state.rankDays[doc.rank] || 0;
+            let assigned = 0;
+            let attempts = 0;
+            
+            while(assigned < target && attempts < 200) {
+                let d = Math.floor(Math.random() * daysInMonth) + 1;
+                let u = state.units[Math.floor(Math.random() * state.units.length)];
+                let slotId = `${year}-${month}-${d}-${u}`;
+
+                // 防呆：確認今天、昨天、明天是否已經有班
+                let worksToday = state.units.some(unit => state.schedule[`${year}-${month}-${d}-${unit}`] === doc.name);
+                let worksYesterday = state.units.some(unit => state.schedule[`${year}-${month}-${d-1}-${unit}`] === doc.name);
+                let worksTomorrow = state.units.some(unit => state.schedule[`${year}-${month}-${d+1}-${unit}`] === doc.name);
+
+                if(!state.schedule[slotId] && !worksToday && !worksYesterday && !worksTomorrow) {
+                    state.schedule[slotId] = doc.name;
+                    assigned++;
+                }
+                attempts++;
+            }
+        });
+
+        // 4. PGY 補空缺 (避開 5東+7東)
+        for(let d=1; d<=daysInMonth; d++) {
+            state.units.forEach(u => {
+                let slotId = `${year}-${month}-${d}-${u}`;
+                if(!state.schedule[slotId]) {
+                    if(u.includes('5東')) {
+                        // 5東+7東 只給 R1-R3 補
+                        let availableR = rDocs.filter(doc => !state.units.some(unit => state.schedule[`${year}-${month}-${d}-${unit}`] === doc.name));
+                        if(availableR.length > 0) state.schedule[slotId] = availableR[Math.floor(Math.random() * availableR.length)].name;
+                    } else {
+                        // 其他給 PGY 補
+                        if(pgyDocs.length > 0) {
+                            let availablePGY = pgyDocs.filter(doc => !state.units.some(unit => state.schedule[`${year}-${month}-${d}-${unit}`] === doc.name));
+                            if(availablePGY.length > 0) state.schedule[slotId] = availablePGY[Math.floor(Math.random() * availablePGY.length)].name;
+                        }
+                    }
+                }
+            });
+        }
+
+        addLog(`自動排班: 執行了 ${year} 年 ${month} 月的排班運算。`);
+        updateView();
+        alert('✨ 自動排班完成！');
+    }
+
+    // --- 匯出 CSV (已恢復) ---
+    function exportCSV() {
+        const year = document.getElementById('yearSelect').value;
+        const month = parseInt(document.getElementById('monthSelect').value) + 1;
+        const days = new Date(year, month, 0).getDate();
+
+        let csv = `\uFEFF單位/日期,` + Array.from({length: days}, (_, i) => `${month}/${i+1}`).join(',') + '\n';
+        
+        state.units.forEach(u => {
+            let row = `${u}`;
+            for(let d=1; d<=days; d++) {
+                row += `,${state.schedule[`${year}-${month}-${d}-${u}`] || ''}`;
+            }
+            csv += row + '\n';
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Duty_Schedule_${year}_${month}.csv`;
+        link.click();
+        addLog(`匯出 CSV: ${year}年${month}月`);
+    }
+
+    // --- 醫師與其他管理 ---
     function renderDoctorList() {
         const filter = document.getElementById('yearFilter').value;
-        const filteredDocs = state.doctors.filter(d => d.year === filter);
-        document.getElementById('doctorList').innerHTML = filteredDocs.map(d => `
-            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:10px; padding:10px; border-bottom:1px solid #ddd; align-items:center;">
-                <input type="text" value="${d.name}" onchange="updateDoc(${d.id}, 'name', this.value)">
-                <span style="font-weight:bold;">${d.year}年度</span>
-                <button class="btn-primary" onclick="viewPersonal(${d.id})">檢視班表</button>
-                <button onclick="deleteDoc(${d.id})" style="color:red;border:none;background:none;cursor:pointer;">✕</button>
+        const filtered = state.doctors.filter(d => d.year === filter);
+        
+        if(filtered.length === 0) {
+            document.getElementById('doctorList').innerHTML = `<div style="padding:15px; color:var(--text-sub); text-align:center;">此學年度尚無醫師名單。</div>`;
+            return;
+        }
+
+        document.getElementById('doctorList').innerHTML = filtered.map((d, i) => `
+            <div style="display: flex; justify-content: space-between; padding: 15px; border: 1px solid var(--border); border-radius:8px; margin-bottom:10px; align-items:center;">
+                <div><strong style="font-size:15px;">${d.name}</strong> <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:11px; margin-left:8px;">${d.rank}</span></div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-outline" onclick="viewDoctorSchedule('${d.name}')">🔍 檢視當月班表</button>
+                    <button class="btn-danger" onclick="deleteDoc(${i})">刪除</button>
+                </div>
             </div>
         `).join('');
     }
 
-    function viewPersonal(docId) {
-        const doc = state.doctors.find(d => d.id === docId);
+    function addDoctor() {
+        const name = document.getElementById('newDocName').value.trim();
+        const year = document.getElementById('newDocYear').value;
+        const rank = document.getElementById('newDocRank').value;
+        if(name) {
+            state.doctors.push({ name, year, rank });
+            document.getElementById('newDocName').value = '';
+            addLog(`新增醫師: ${name} (${rank}, ${year}學年度)`);
+            renderDoctorList();
+            save();
+        }
+    }
+
+    function viewDoctorSchedule(name) {
         const year = document.getElementById('yearSelect').value;
         const month = parseInt(document.getElementById('monthSelect').value) + 1;
-        
-        // 搜尋當月班表
         let myShifts = [];
+        
         for(let key in state.schedule) {
-            if(key.startsWith(`${year}-${month}-`) && state.schedule[key] === doc.name) {
+            if(key.startsWith(`${year}-${month}-`) && state.schedule[key] === name) {
                 const parts = key.split('-');
-                myShifts.push(`${parts[1]}/${parts[2]} - ${parts[3]}`);
+                myShifts.push(`<b>${parts[1]}/${parts[2]}</b> ➔ ${parts[3]}`);
             }
         }
-
-        document.getElementById('modalDocName').innerText = `${doc.name} (${doc.year}年度) - ${month}月份班表`;
-        document.getElementById('modalDocContent').innerHTML = myShifts.length > 0 ? 
-            `當月值班總數: <b>${myShifts.length}</b> 天<br><ul>${myShifts.map(s => `<li>${s}</li>`).join('')}</ul>` : 
-            "當月尚無排班紀錄。";
         
+        document.getElementById('modalDocName').innerText = `👨‍⚕️ ${name} (${month}月班表)`;
+        document.getElementById('modalDocContent').innerHTML = myShifts.length > 0 ? 
+            `<div style="margin-bottom:10px; color:var(--text-sub);">當月共排班：<strong style="color:var(--primary); font-size:16px;">${myShifts.length}</strong> 天</div>
+             <ul style="list-style:none; padding:0;">${myShifts.map(s => `<li style="padding:8px 0; border-bottom:1px dashed #e2e8f0;">${s}</li>`).join('')}</ul>` : 
+            "<div style="color:var(--text-sub);">當月尚未安排任何班次。</div>";
+            
+        document.getElementById('modalOverlay').style.display = 'block';
         document.getElementById('docModal').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
     }
 
-    function closeDocModal() {
-        document.getElementById('docModal').style.display = 'none';
-        document.getElementById('overlay').style.display = 'none';
-    }
-
-    function addNewDoctor() {
-        const name = document.getElementById('newDocName').value;
-        const year = document.getElementById('newDocYear').value;
-        if(!name) return;
-        state.doctors.push({ id: Date.now(), name, year, rank: 'R1', status: '在職' });
-        document.getElementById('newDocName').value = '';
-        refreshAll();
-    }
-
-    // 單位 & 天數 (修復顯示問題)
     function renderUnitList() {
-        document.getElementById('unitListDisplay').innerHTML = state.units.map((u,i) => `
-            <div style="padding:10px; border-bottom:1px solid #ddd;">${u} <span onclick="deleteUnit(${i})" style="color:red;float:right;cursor:pointer;">✕</span></div>
+        document.getElementById('unitListContainer').innerHTML = state.units.map((u, i) => `
+            <div style="padding:15px; border: 1px solid var(--border); border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:600;">${u}</span> 
+                <button class="btn-danger" onclick="deleteUnit(${i})">刪除</button>
+            </div>
         `).join('');
-    }
-
-    function renderSettings() {
-        document.getElementById('rankSettings').innerHTML = Object.keys(state.rankDays).map(r => `
-            <div style="margin-bottom:10px;">${r}: <input type="number" value="${state.rankDays[r]}" onchange="state.rankDays['${r}']=parseInt(this.value);save();"> 天</div>
-        `).join('');
-    }
-
-    function pickDoc(id) {
-        const name = prompt("指派醫師姓名:");
-        if(name) { state.schedule[id] = name; refreshAll(); }
     }
 
     function addUnit() {
-        const name = document.getElementById('newUnitName').value;
-        if(name) { state.units.push(name); document.getElementById('newUnitName').value = ''; refreshAll(); }
+        const u = document.getElementById('newUnitName').value.trim();
+        if(u) { state.units.push(u); document.getElementById('newUnitName').value = ''; addLog(`新增單位: ${u}`); renderUnitList(); save(); }
     }
+
+    function renderRankSettings() {
+        document.getElementById('rankSettingsContainer').innerHTML = Object.keys(state.rankDays).map(r => `
+            <div style="margin-bottom:15px; display:flex; align-items:center; gap:15px;">
+                <span style="width:50px; font-weight:600;">${r}</span>
+                <input type="number" value="${state.rankDays[r]}" style="width:100px;" onchange="state.rankDays['${r}']=parseInt(this.value); save(); renderRankSettings();"> 天
+            </div>
+        `).join('');
+
+        // 動態試算 PGY
+        const currentAcYear = document.getElementById('yearFilter').value;
+        const totalSlots = 31 * state.units.length; // 預估最大值
+        let rTotal = 0;
+        state.doctors.filter(d => d.year === currentAcYear).forEach(d => { if(state.rankDays[d.rank]) rTotal += state.rankDays[d.rank]; });
+        
+        const pgyCount = state.doctors.filter(d => d.year === currentAcYear && d.rank.includes('PGY')).length;
+        const pgyAvg = pgyCount > 0 ? ((totalSlots - rTotal) / pgyCount).toFixed(1) : 0;
+        
+        document.getElementById('pgyCalculator').innerHTML = `
+            <strong>📊 當月預估產能分析 (${currentAcYear}學年度人力)</strong><br><br>
+            總需求：${totalSlots} 班次<br>
+            R級產能：${rTotal} 班次<br>
+            PGY 建議均分：<strong style="color:var(--primary); font-size:16px;">${pgyAvg}</strong> 天/人
+        `;
+    }
+
+    // --- 輔助與互動 ---
+    function manualAssign(id) {
+        // 先檢查是否有舊資料，有的話讓使用者決定是要覆蓋還是刪除
+        const currentDoc = state.schedule[id];
+        let msg = currentDoc ? `目前為 [${currentDoc}]。請輸入新醫師姓名來替換，或輸入「空白」來刪除：` : "請輸入要指派的醫師姓名：";
+        const name = prompt(msg);
+        
+        if (name !== null) {
+            if (name.trim() === "" || name === "空白") {
+                delete state.schedule[id];
+                addLog(`手動刪除: 移除了 ${id} 的班表`);
+            } else {
+                state.schedule[id] = name.trim();
+                addLog(`手動指派: 將 ${name.trim()} 指派至 ${id}`);
+            }
+            updateView();
+        }
+    }
+
+    function addLog(msg) {
+        state.logs.unshift(`[${new Date().toLocaleString()}] ${msg}`);
+        if(state.logs.length > 100) state.logs.pop(); // 只保留 100 筆
+        save();
+    }
+
+    function toggleAuditModal() {
+        document.getElementById('auditBody').innerHTML = state.logs.length > 0 ? state.logs.join('<br><br>') : "尚無紀錄。";
+        document.getElementById('modalOverlay').style.display = 'block';
+        document.getElementById('auditModal').style.display = 'block';
+    }
+
+    function closeModals() {
+        document.getElementById('modalOverlay').style.display = 'none';
+        document.getElementById('docModal').style.display = 'none';
+        document.getElementById('auditModal').style.display = 'none';
+    }
+
+    function deleteUnit(i) { state.units.splice(i, 1); addLog("刪除了單位"); renderUnitList(); save(); }
+    function deleteDoc(i) { state.doctors.splice(i, 1); addLog("刪除了醫師"); renderDoctorList(); save(); }
     
-    function deleteUnit(i) { state.units.splice(i,1); refreshAll(); }
-    function deleteDoc(id) { state.doctors = state.doctors.filter(d => d.id !== id); refreshAll(); }
     function save() {
-        localStorage.setItem('ds_docs_v3', JSON.stringify(state.doctors));
-        localStorage.setItem('ds_units_v3', JSON.stringify(state.units));
-        localStorage.setItem('ds_sched_v3', JSON.stringify(state.schedule));
+        localStorage.setItem('ds_docs_v32', JSON.stringify(state.doctors));
+        localStorage.setItem('ds_units_v32', JSON.stringify(state.units));
+        localStorage.setItem('ds_ranks_v32', JSON.stringify(state.rankDays));
+        localStorage.setItem('ds_sched_v32', JSON.stringify(state.schedule));
+        localStorage.setItem('ds_logs_v32', JSON.stringify(state.logs));
     }
 </script>
 </body>
