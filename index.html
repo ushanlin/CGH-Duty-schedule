@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>內科住院醫師精準排班系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #3b82f6; --bg: #f8fafc; --sidebar: #ffffff;
+        --text: #1e293b; --border: #e2e8f0; --accent: #06b6d4;
+        --r1: #22c55e; --r2: #eab308; --r3: #f97316; --r4: #a855f7; --pgy: #06b6d4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); }
+    
+    /* 導覽選單 */
+    nav { background: #1e293b; color: white; padding: 0 20px; height: 55px; display: flex; align-items: center; gap: 25px; position: sticky; top: 0; z-index: 1000; }
+    nav .brand { font-weight: 700; font-size: 18px; margin-right: 15px; color: var(--primary); }
+    nav span { cursor: pointer; font-size: 14px; opacity: 0.7; transition: 0.2s; padding: 18px 0; }
+    nav span:hover, nav span.active { opacity: 1; border-bottom: 3px solid var(--primary); }
+
+    .container { padding: 25px; max-width: 1400px; margin: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    h2 { font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #334155; }
+    
+    /* 表格樣式 */
+    .table-responsive { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+    th, td { border: 1px solid var(--border); padding: 12px 8px; text-align: center; font-size: 13px; }
+    th { background: #f8fafc; font-weight: 600; }
+    .weekend { background: #f1f5f9; color: var(--primary); }
+
+    /* 按鈕與輸入 */
+    .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; font-size: 14px; }
+    .btn-add { background: var(--primary); color: white; }
+    .btn-primary { background: #1e293b; color: white; }
+    .btn-export { background: #10b981; color: white; }
+    .btn-danger { background: #ef4444; color: white; padding: 5px 10px; font-size: 12px; }
+    
+    input, select { padding: 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; font-size: 14px; }
+    
+    /* 班表格子內容 */
+    .slot { min-height: 50px; position: relative; }
+    .doc-tag { display: block; background: #eff6ff; color: #1e40af; padding: 4px; border-radius: 4px; font-size: 12px; margin-top: 2px; border: 1px solid #bfdbfe; font-weight: 500; }
+    .special-notice { color: #f59e0b; font-size: 11px; margin-top: 4px; font-weight: 600; }
+
+    /* 統計資訊 */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+    .stat-item { padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+    .stat-value { font-size: 20px; font-weight: 700; color: var(--primary); }
+</style>
+</head>
+<body>
+
+<nav>
+    <div class="brand">MED SCHEDULE</div>
+    <span onclick="showPage('page-doctors')" id="nav-doctors">醫師管理</span>
+    <span onclick="showPage('page-units')" id="nav-units">單位管理</span>
+    <span onclick="showPage('page-settings')" id="nav-settings">天數設定</span>
+    <span onclick="showPage('page-schedule')" id="nav-schedule" class="active">班表管理</span>
+</nav>
+
+<div class="container">
+    <div id="page-doctors" class="page">
+        <div class="card">
+            <h2>👨‍⚕️ 醫師名單</h2>
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                <input type="text" id="newDocName" placeholder="姓名">
+                <select id="newDocRank">
+                    <option value="PGY1">PGY1</option><option value="PGY2">PGY2</option>
+                    <option value="R1">R1</option><option value="R2">R2</option>
+                    <option value="R3">R3</option><option value="R4">R4</option>
+                </select>
+                <button class="btn btn-add" onclick="addDoctor()">新增醫師</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>姓名</th><th>職等</th><th>操作</th></tr></thead>
+                    <tbody id="doctorList"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-units" class="page">
+        <div class="card">
+            <h2>🏢 值班單位設定 (31天 x 5單位範例)</h2>
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <input type="text" id="newUnitName" placeholder="新增單位名稱 (如: 7西)">
+                <button class="btn btn-add" onclick="addUnit()">新增單位</button>
+            </div>
+            <div id="unitListDisplay" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;"></div>
+        </div>
+    </div>
+
+    <div id="page-settings" class="page">
+        <div class="card">
+            <h2>⚙️ 職等天數權重 (預設基準)</h2>
+            <div id="rankSettingsContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;"></div>
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid var(--border);">
+            <h3>📊 當月產能試算</h3>
+            <div id="pgyCalculator" class="stat-grid"></div>
+        </div>
+    </div>
+
+    <div id="page-schedule" class="page active">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 id="scheduleTitle">📅 班表管理</h2>
+                    <p style="font-size: 12px; color: #64748b;">提示：R4 僅負責「總值」，5東+7東僅限 R1-R3 抽籤。</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="autoGenerate()">⚡ 自動排班</button>
+                    <button class="btn btn-export" onclick="exportCSV()">📥 匯出 CSV</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table id="mainTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- 核心數據儲存 ---
+let doctors = JSON.parse(localStorage.getItem('med_docs')) || [
+    { name: '測試醫師A', rank: 'R1' }, { name: '測試醫師B', rank: 'PGY1' }
+];
+let units = JSON.parse(localStorage.getItem('med_units')) || ['CCU', 'MICU', '6西', '25病房', '26病房', '27病房', '5東+7東'];
+let rankSettings = { 'R1': 8, 'R2': 7, 'R3': 6, 'R4': 2, 'PGY1': 0, 'PGY2': 0 };
+let scheduleData = {}; // 格式: { "Day-Unit": "DocName" }
+
+// --- 初始化 ---
+window.onload = () => {
+    refreshAll();
+};
+
+function refreshAll() {
+    localStorage.setItem('med_docs', JSON.stringify(doctors));
+    localStorage.setItem('med_units', JSON.stringify(units));
+    renderDoctors();
+    renderUnits();
+    renderSettings();
+    renderScheduleTable();
+}
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav span').forEach(s => s.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.getElementById('nav-' + pageId.split('-')[1]).classList.add('active');
+}
+
+// --- 醫師功能 ---
+function addDoctor() {
+    const name = document.getElementById('newDocName').value;
+    const rank = document.getElementById('newDocRank').value;
+    if(name) {
+        doctors.push({ name, rank });
+        document.getElementById('newDocName').value = '';
+        refreshAll();
+    }
+}
+
+function renderDoctors() {
+    const list = document.getElementById('doctorList');
+    list.innerHTML = doctors.map((d, index) => `
+        <tr>
+            <td>${d.name}</td>
+            <td><b style="color:var(--primary)">${d.rank}</b></td>
+            <td><button class="btn-danger" onclick="doctors.splice(${index},1); refreshAll();">刪除</button></td>
+        </tr>
+    `).join('');
+}
+
+// --- 單位功能 ---
+function addUnit() {
+    const name = document.getElementById('newUnitName').value;
+    if(name) { units.push(name); document.getElementById('newUnitName').value = ''; refreshAll(); }
+}
+
+function renderUnits() {
+    const display = document.getElementById('unitListDisplay');
+    display.innerHTML = units.map((u, index) => `
+        <div class="stat-item" style="text-align:left; display:flex; justify-content:space-between; align-items:center;">
+            <span>${u} ${u.includes('5東') ? '<span class="special-notice">(R1-3專屬)</span>' : ''}</span>
+            <button class="btn-danger" onclick="units.splice(${index},1); refreshAll();">✕</button>
+        </div>
+    `).join('');
+}
+
+// --- 天數與產能試算 ---
+function renderSettings() {
+    const container = document.getElementById('rankSettingsContainer');
+    container.innerHTML = ['R1','R2','R3','R4'].map(r => `
+        <div style="display:flex; align-items:center; gap:15px;">
+            <label style="width:50px; font-weight:bold;">${r}</label>
+            <input type="number" value="${rankSettings[r]}" onchange="rankSettings['${r}']=parseInt(this.value); refreshAll();">
+        </div>
+    `).join('');
+
+    // 計算 PGY 應該值幾天
+    const days = 31;
+    const totalRequired = days * units.length;
+    let rTotal = 0;
+    doctors.forEach(d => { if(['R1','R2','R3'].includes(d.rank)) rTotal += rankSettings[d.rank]; });
+    
+    const pgyNeeded = totalRequired - rTotal;
+    const pgyCount = doctors.filter(d => d.rank.includes('PGY')).length;
+    const pgyAvg = pgyCount > 0 ? (pgyNeeded / pgyCount).toFixed(1) : 0;
+
+    document.getElementById('pgyCalculator').innerHTML = `
+        <div class="stat-item"><div>總需求班次</div><div class="stat-value">${totalRequired}</div></div>
+        <div class="stat-item"><div>R1-R3 總產能</div><div class="stat-value">${rTotal}</div></div>
+        <div class="stat-item"><div>PGY 需分擔</div><div class="stat-value">${pgyNeeded}</div></div>
+        <div class="stat-item" style="border: 2px solid var(--accent)"><div>PGY 建議天數</div><div class="stat-value">${pgyAvg}</div></div>
+    `;
+}
+
+// --- 班表渲染 ---
+function renderScheduleTable() {
+    const head = document.getElementById('tableHead');
+    const body = document.getElementById('tableBody');
+    const days = 31;
+
+    let headHtml = '<tr><th>單位 \\ 日期</th>';
+    for(let i=1; i<=days; i++) {
+        const isWeekend = [0,6].includes(new Date(2026,2,i).getDay());
+        headHtml += `<th class="${isWeekend?'weekend':''}">${i}</th>`;
+    }
+    headHtml += '</tr>';
+    head.innerHTML = headHtml;
+
+    body.innerHTML = units.map(u => `
+        <tr>
+            <td style="font-weight:bold; background:#f8fafc; text-align:left;">${u}</td>
+            ${Array.from({length:days}).map((_, i) => `<td class="slot" id="slot-${i+1}-${u}">${renderSlot(i+1, u)}</td>`).join('')}
+        </tr>
+    `).join('');
+}
+
+function renderSlot(day, unit) {
+    const key = `${day}-${unit}`;
+    const name = scheduleData[key];
+    return name ? `<span class="doc-tag" onclick="clearSlot('${key}')">${name}</span>` : '';
+}
+
+function clearSlot(key) {
+    delete scheduleData[key];
+    renderScheduleTable();
+}
+
+// --- 自動排班邏輯 (遵守規則) ---
+function autoGenerate() {
+    scheduleData = {};
+    const days = 31;
+    
+    // 1. 分類醫師
+    let rPool = doctors.filter(d => ['R1','R2','R3'].includes(d.rank));
+    let pgyPool = doctors.filter(d => d.rank.includes('PGY'));
+    let r4Pool = doctors.filter(d => d.rank === 'R4');
+
+    // 2. 遍歷每一天、每一個單位進行分配
+    for(let d=1; d<=days; d++) {
+        units.forEach(u => {
+            let candidate = null;
+            
+            // 規則 A: 如果是 5東+7東，只能從 R1-R3 選
+            if(u.includes('5東')) {
+                candidate = rPool[Math.floor(Math.random() * rPool.length)];
+            } else {
+                // 規則 B: 其他單位由 PGY 或 R1-R3 混合
+                let combined = [...rPool, ...pgyPool];
+                candidate = combined[Math.floor(Math.random() * combined.length)];
+            }
+
+            if(candidate) scheduleData[`${d}-${u}`] = candidate.name;
+        });
+    }
+
+    renderScheduleTable();
+    alert("自動排班完成！(已套用職等限制規則)");
+}
+
+function exportCSV() {
+    let csv = "\uFEFF單位/日期," + Array.from({length:31}, (_,i)=>i+1).join(",") + "\n";
+    units.forEach(u => {
+        let row = u;
+        for(let d=1; d<=31; d++) {
+            row += "," + (scheduleData[`${d}-${u}`] || "");
+        }
+        csv += row + "\n";
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "內科排班表.csv";
+    link.click();
+}
+</script>
+</body>
+</html>
