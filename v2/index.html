@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>內科住院醫師排班系統 v3.5 - 單位核心完整版</title>
+<title>內科住院醫師排班系統 v3.6 - 單位核心可編輯版</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -45,6 +45,7 @@
     .btn-success { background: var(--success); color: white; }
     .btn-danger { background: var(--warning); color: white; }
     .btn-outline { background: white; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f1f5f9; }
     
     input, select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; background: white; }
     input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
@@ -58,12 +59,14 @@
     .doc-tag-pgy { background: #e0f2fe; color: #0369a1; }
 
     /* 單位管理卡片 */
-    .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-    .unit-card { border: 1px solid var(--border); border-radius: 10px; padding: 15px; background: #fff; }
+    .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+    .unit-card { border: 1px solid var(--border); border-radius: 10px; padding: 15px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .unit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
-    .rank-capsule-group { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-    .rank-capsule { padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); font-size: 11px; cursor: pointer; font-weight: 600; background: #f8fafc; color: #94a3b8; transition: 0.2s; }
+    .unit-actions { display: flex; gap: 5px; }
+    .rank-capsule-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .rank-capsule { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; font-weight: 600; background: #f8fafc; color: #94a3b8; transition: 0.2s; user-select: none; }
     .rank-capsule.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .rank-capsule:hover { opacity: 0.8; }
 
     /* 統計與矩陣 */
     .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
@@ -84,12 +87,11 @@
 <body>
 
 <nav>
-    <div class="brand">MED Duty v3.5</div>
+    <div class="brand">Duty System v3.6</div>
     <span onclick="showPage('page-schedule')" id="nav-schedule" class="active">📅 班表管理</span>
-    <span onclick="showPage('page-units')" id="nav-units">🏢 單位設定</span>
+    <span onclick="showPage('page-units')" id="nav-units">🏢 單位管理</span>
     <span onclick="showPage('page-doctors')" id="nav-doctors">👨‍⚕️ 醫師管理</span>
     <span onclick="showPage('page-stats')" id="nav-stats">📊 統計總覽</span>
-    <span onclick="showPage('page-settings')" id="nav-settings">⚙️ 權重設定</span>
     <span onclick="toggleLogModal()" style="color: #fda4af; margin-left: auto;">📝 紀錄</span>
 </nav>
 
@@ -106,7 +108,7 @@
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn btn-primary" onclick="autoGenerate()">⚡ 一鍵排班</button>
-                    <button class="btn btn-success" onclick="exportCSV()">📥 匯出 CSV</button>
+                    <button class="btn btn-success" onclick="exportCSV()">📥 匯出</button>
                 </div>
             </div>
             <div id="calendarDisplay"></div>
@@ -116,10 +118,13 @@
     <div id="page-units" class="page">
         <div class="card">
             <h2>🏢 單位管理</h2>
+            <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">新增或編輯值班單位，並點擊職等標籤以設定該單位允許哪些層級的醫師值班。</p>
+            
             <div style="display: flex; gap: 10px; margin-bottom: 25px; padding: 15px; background: #f1f5f9; border-radius: 8px;">
-                <input type="text" id="newUnitName" placeholder="輸入單位名稱 (如: 7西, 12樓 ICU...)" style="flex: 1;">
+                <input type="text" id="newUnitName" placeholder="輸入新單位名稱 (如: CCU, 7西...)" style="flex: 1;">
                 <button class="btn btn-primary" onclick="addUnit()">+ 新增單位</button>
             </div>
+            
             <div id="unitConfigList" class="unit-grid"></div>
         </div>
     </div>
@@ -128,7 +133,7 @@
         <div class="card">
             <h2>👨‍⚕️ 住院醫師名單</h2>
             <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; padding: 15px; background: #f1f5f9; border-radius: 8px;">
-                <input type="text" id="newDocName" placeholder="姓名..." style="width: 150px;">
+                <input type="text" id="newDocName" placeholder="醫師姓名..." style="width: 150px;">
                 <select id="newDocRank">
                     <option value="R1">R1</option><option value="R2">R2</option><option value="R3">R3</option><option value="R4">R4</option>
                     <option value="PGY1">PGY1</option><option value="PGY2">PGY2</option>
@@ -150,41 +155,22 @@
             <div id="matrixContainer" class="matrix-wrapper"></div>
         </div>
     </div>
-
-    <div id="page-settings" class="page">
-        <div class="card">
-            <h2>⚙️ 各職等預設值班天數 (權重)</h2>
-            <div id="rankWeightContainer" class="stat-grid" style="margin-bottom: 30px;"></div>
-            
-            <h2>🛡️ 排班規則限制</h2>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <span style="font-size: 13px;">R 級最大連續</span><br>
-                    <input type="number" id="ruleMaxR" value="3" style="width: 60px; text-align: center;"> 天
-                </div>
-                <div class="stat-card">
-                    <span style="font-size: 13px;">PGY 最大連續</span><br>
-                    <input type="number" id="ruleMaxPGY" value="2" style="width: 60px; text-align: center;"> 天
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModals()"></div>
 <div class="modal" id="pickerModal">
     <div class="modal-header"><h3 id="pickerTitle">指派人員</h3></div>
     <input type="hidden" id="pickerSlotId">
-    <select id="pickerSelect" style="width: 100%; margin-bottom: 20px; padding: 10px;"></select>
+    <select id="pickerSelect" style="width: 100%; margin-bottom: 20px; padding: 10px; font-size: 14px;"></select>
     <div style="display: flex; gap: 10px;">
         <button class="btn btn-primary" style="flex:1;" onclick="confirmPick(false)">確認指派</button>
-        <button class="btn btn-danger" style="flex:1;" onclick="confirmPick(true)">清除位置</button>
+        <button class="btn btn-danger" style="flex:1;" onclick="confirmPick(true)">清除排班</button>
     </div>
 </div>
 
 <div class="modal" id="logModal" style="width: 600px;">
     <div class="modal-header"><h3>📝 系統紀錄</h3></div>
-    <div id="logBody" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; max-height: 400px; overflow-y: auto; background: #f1f5f9; padding: 15px; border-radius: 8px;"></div>
+    <div id="logBody" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; max-height: 400px; overflow-y: auto; background: #f8fafc; padding: 15px; border-radius: 8px; line-height: 1.6;"></div>
     <button class="btn btn-outline" style="width:100%; margin-top:15px;" onclick="closeModals()">關閉</button>
 </div>
 
@@ -192,24 +178,20 @@
     // ==================== 1. 核心狀態 (State) ====================
     let state = {
         view: 'total',
-        // 初始單位資料 (無部門，純單位)
-        units: JSON.parse(localStorage.getItem('med_units_v35')) || [
+        units: JSON.parse(localStorage.getItem('med_units_v36')) || [
             { name: 'CCU', ranks: ['R1', 'R2', 'R3', 'R4'] },
             { name: 'MICU', ranks: ['R1', 'R2', 'R3', 'R4'] },
-            { name: '7西', ranks: ['R1', 'R2', 'PGY1', 'PGY2'] },
-            { name: '8西', ranks: ['R1', 'R2', 'PGY1', 'PGY2'] }
+            { name: '7西', ranks: ['R1', 'R2', 'PGY1', 'PGY2'] }
         ],
-        // 初始醫師資料
-        doctors: JSON.parse(localStorage.getItem('med_docs_v35')) || [
-            { id: 1, name: '林大夫', rank: 'R1', year: '114' },
-            { id: 2, name: '陳大夫', rank: 'PGY1', year: '114' }
+        doctors: JSON.parse(localStorage.getItem('med_docs_v36')) || [
+            { id: 1, name: '林醫師', rank: 'R1', year: '114' },
+            { id: 2, name: '陳醫師', rank: 'PGY1', year: '114' }
         ],
-        schedule: JSON.parse(localStorage.getItem('med_sched_v35')) || {},
-        rankWeights: JSON.parse(localStorage.getItem('med_weights_v35')) || { 'R1': 8, 'R2': 7, 'R3': 6, 'R4': 2, 'PGY1': 4, 'PGY2': 4 },
-        logs: []
+        schedule: JSON.parse(localStorage.getItem('med_sched_v36')) || {},
+        logs: JSON.parse(localStorage.getItem('med_logs_v36')) || []
     };
 
-    // ==================== 2. 初始化 (Initialization) ====================
+    // ==================== 2. 初始化 ====================
     window.onload = () => {
         const now = new Date();
         const yearSel = document.getElementById('yearSelect');
@@ -217,7 +199,6 @@
         const docYearSel = document.getElementById('newDocYear');
         const filterYearSel = document.getElementById('yearFilter');
 
-        // 下拉選單填充
         for(let i=2025; i<=2027; i++) yearSel.add(new Option(i, i));
         for(let i=1; i<=12; i++) monthSel.add(new Option(i+'月', i));
         ['113','114','115'].forEach(y => {
@@ -231,7 +212,6 @@
         filterYearSel.value = '114';
 
         updateView();
-        addLog("系統初始化完成");
     };
 
     function showPage(pageId) {
@@ -243,7 +223,6 @@
         if(pageId === 'page-units') renderUnitConfig();
         if(pageId === 'page-doctors') renderDoctorList();
         if(pageId === 'page-stats') renderStats();
-        if(pageId === 'page-settings') renderRankWeights();
     }
 
     function switchView(v) {
@@ -254,9 +233,14 @@
         updateView();
     }
 
-    // ==================== 3. 單位管理 (完整邏輯) ====================
+    // ==================== 3. 單位管理 (新增、編輯、刪除、職等) ====================
     function renderUnitConfig() {
         const container = document.getElementById('unitConfigList');
+        if (state.units.length === 0) {
+            container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:30px; color:#94a3b8;">目前沒有任何單位資料，請在上方新增。</div>';
+            return;
+        }
+
         container.innerHTML = state.units.map((u, uIdx) => {
             const ranks = ['R1', 'R2', 'R3', 'R4', 'PGY1', 'PGY2'];
             const capsules = ranks.map(r => `
@@ -267,9 +251,13 @@
             return `
                 <div class="unit-card">
                     <div class="unit-header">
-                        <strong>${u.name}</strong>
-                        <button class="btn btn-danger" style="padding:2px 8px; font-size:11px;" onclick="deleteUnit(${uIdx})">刪除</button>
+                        <strong style="font-size: 16px;">${u.name}</strong>
+                        <div class="unit-actions">
+                            <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="editUnit(${uIdx})">編輯</button>
+                            <button class="btn btn-danger" style="padding:4px 10px; font-size:12px;" onclick="deleteUnit(${uIdx})">刪除</button>
+                        </div>
                     </div>
+                    <div style="font-size:12px; color:#64748b; margin-top:5px;">允許值班職等：</div>
                     <div class="rank-capsule-group">${capsules}</div>
                 </div>
             `;
@@ -280,7 +268,7 @@
         const input = document.getElementById('newUnitName');
         const name = input.value.trim();
         if(!name) return alert("請輸入單位名稱");
-        if(state.units.some(u => u.name === name)) return alert("單位已存在");
+        if(state.units.some(u => u.name === name)) return alert("單位已存在，請使用不同名稱！");
         
         state.units.push({ name, ranks: ['R1', 'R2', 'R3', 'R4', 'PGY1', 'PGY2'] });
         input.value = '';
@@ -290,8 +278,48 @@
         updateView();
     }
 
+    // ⭐ 編輯單位功能 (同步更新班表資料庫)
+    function editUnit(idx) {
+        const oldName = state.units[idx].name;
+        const newName = prompt("請輸入新的單位名稱：", oldName);
+        
+        if (newName && newName.trim() !== "" && newName !== oldName) {
+            const finalName = newName.trim();
+            
+            // 檢查是否跟其他單位撞名
+            if (state.units.some((u, i) => i !== idx && u.name === finalName)) {
+                return alert("這個單位名稱已經存在囉！");
+            }
+            
+            // 1. 更新單位陣列中的名稱
+            state.units[idx].name = finalName;
+            
+            // 2. 更新班表資料庫 (state.schedule) 中的 key
+            // 格式原本是: "YYYY-M-D-舊單位名"
+            const updatedSchedule = {};
+            let changeCount = 0;
+            
+            for (let key in state.schedule) {
+                const parts = key.split('-');
+                if (parts.length === 4 && parts[3] === oldName) {
+                    const newKey = `${parts[0]}-${parts[1]}-${parts[2]}-${finalName}`;
+                    updatedSchedule[newKey] = state.schedule[key];
+                    changeCount++;
+                } else {
+                    updatedSchedule[key] = state.schedule[key];
+                }
+            }
+            state.schedule = updatedSchedule;
+
+            addLog(`編輯單位: [${oldName}] 改名為 [${finalName}] (同步轉移 ${changeCount} 筆排班紀錄)`);
+            renderUnitConfig();
+            updateView();
+            save();
+        }
+    }
+
     function deleteUnit(idx) {
-        if(!confirm(`確定要刪除「${state.units[idx].name}」嗎？相關班表資料將無法顯示。`)) return;
+        if(!confirm(`確定要刪除「${state.units[idx].name}」嗎？\n注意：這不會刪除歷史排班紀錄，但該單位將從畫面上消失。`)) return;
         addLog(`刪除單位: ${state.units[idx].name}`);
         state.units.splice(idx, 1);
         renderUnitConfig();
@@ -307,7 +335,7 @@
         save();
     }
 
-    // ==================== 4. 醫師管理 (完整邏輯) ====================
+    // ==================== 4. 醫師管理 ====================
     function renderDoctorList() {
         const filter = document.getElementById('yearFilter').value;
         const filtered = state.doctors.filter(d => d.year === filter);
@@ -319,12 +347,12 @@
         }
 
         container.innerHTML = filtered.map(d => `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:10px 20px; margin-bottom:10px;">
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:15px 20px; margin-bottom:10px;">
                 <div>
                     <strong style="font-size:16px;">${d.name}</strong>
                     <span class="doc-tag doc-tag-${d.rank.toLowerCase()}" style="margin-left:10px;">${d.rank}</span>
                 </div>
-                <button class="btn btn-danger" style="padding:4px 10px;" onclick="deleteDoc(${d.id})">刪除</button>
+                <button class="btn btn-danger" style="padding:6px 12px;" onclick="deleteDoc(${d.id})">刪除</button>
             </div>
         `).join('');
     }
@@ -351,7 +379,7 @@
         save();
     }
 
-    // ==================== 5. 班表渲染核心 (完整渲染) ====================
+    // ==================== 5. 班表渲染核心 ====================
     function updateView() {
         const uSel = document.getElementById('unitSelect');
         const currU = uSel.value;
@@ -368,7 +396,7 @@
         const month = parseInt(document.getElementById('monthSelect').value);
         const daysInMonth = new Date(year, month, 0).getDate();
 
-        let html = '<div class="table-responsive"><table><thead><tr><th style="min-width:100px;">單位 \\ 日期</th>';
+        let html = '<div class="table-responsive"><table><thead><tr><th style="min-width:120px; text-align:left; padding-left:15px;">單位 \\ 日期</th>';
         for(let d=1; d<=daysInMonth; d++) {
             const isWk = [0,6].includes(new Date(year, month-1, d).getDay());
             html += `<th class="${isWk ? 'weekend' : ''}">${d}</th>`;
@@ -376,7 +404,7 @@
         html += '</tr></thead><tbody>';
 
         state.units.forEach(u => {
-            html += `<tr><td style="font-weight:bold; background:#f8fafc; text-align:left; padding-left:10px;">${u.name}</td>`;
+            html += `<tr><td style="font-weight:bold; background:#f8fafc; text-align:left; padding-left:15px;">${u.name}</td>`;
             for(let d=1; d<=daysInMonth; d++) {
                 const slotId = `${year}-${month}-${d}-${u.name}`;
                 const docName = state.schedule[slotId] || '';
@@ -398,8 +426,13 @@
         const daysInMonth = new Date(year, month, 0).getDate();
         const firstDay = new Date(year, month-1, 1).getDay();
 
+        if(!unitName) {
+            document.getElementById('calendarDisplay').innerHTML = "<p>請先新增單位</p>";
+            return;
+        }
+
         let html = `<div style="display:grid; grid-template-columns: repeat(7, 1fr); background:#e2e8f0; gap:1px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">`;
-        ['日','一','二','三','四','五','六'].forEach(w => html += `<div style="background:#f8fafc; padding:10px; text-align:center; font-weight:bold; font-size:13px;">${w}</div>`);
+        ['日','一','二','三','四','五','六'].forEach(w => html += `<div style="background:#f8fafc; padding:10px; text-align:center; font-weight:bold; font-size:14px;">${w}</div>`);
         
         for(let i=0; i<firstDay; i++) html += `<div style="background:#f8fafc; min-height:100px;"></div>`;
         
@@ -411,29 +444,31 @@
             const isWk = [0,6].includes(new Date(year, month-1, d).getDay());
             
             html += `
-                <div style="background:white; min-height:100px; padding:8px; cursor:pointer;" onclick="openPicker('${slotId}')">
-                    <div style="font-size:12px; font-weight:bold; color:${isWk ? '#ef4444' : '#64748b'}">${d}</div>
-                    <div style="margin-top:10px;">${docName ? `<span class="doc-tag ${tagClass}">${docName}</span>` : ''}</div>
+                <div style="background:white; min-height:100px; padding:10px; cursor:pointer;" onclick="openPicker('${slotId}')">
+                    <div style="font-size:14px; font-weight:bold; color:${isWk ? '#ef4444' : '#64748b'}">${d}</div>
+                    <div style="margin-top:15px;">${docName ? `<span class="doc-tag ${tagClass}">${docName}</span>` : ''}</div>
                 </div>
             `;
         }
         document.getElementById('calendarDisplay').innerHTML = html + '</div>';
     }
 
-    // ==================== 6. 排班邏輯 (Picker & Auto) ====================
+    // ==================== 6. 手動指派與一鍵排班 ====================
     function openPicker(slotId) {
         document.getElementById('pickerSlotId').value = slotId;
         const parts = slotId.split('-');
         const unit = state.units.find(u => u.name === parts[3]);
         const filterYear = document.getElementById('yearFilter').value;
         
+        if (!unit) return alert("單位不存在");
+
         document.getElementById('pickerTitle').innerText = `${parts[1]}/${parts[2]} - ${parts[3]} 指派`;
         
         let opts = '<option value="">-- 請選擇醫師 --</option>';
         state.doctors.filter(d => d.year === filterYear).forEach(d => {
             const allowed = unit.ranks.includes(d.rank);
             opts += `<option value="${d.name}" ${!allowed ? 'disabled' : ''}>
-                ${d.name} (${d.rank}) ${!allowed ? '[職等不符]' : ''}
+                ${d.name} (${d.rank}) ${!allowed ? '[單位不允許此職等]' : ''}
             </option>`;
         });
         
@@ -446,7 +481,7 @@
         const slotId = document.getElementById('pickerSlotId').value;
         if(isClear) {
             delete state.schedule[slotId];
-            addLog(`手動清除: ${slotId}`);
+            addLog(`手動清除班次: ${slotId}`);
         } else {
             const name = document.getElementById('pickerSelect').value;
             if(!name) return;
@@ -457,31 +492,27 @@
         updateView();
     }
 
-    // 一鍵排班 (考慮職等許可與天數權重)
     function autoGenerate() {
         const year = document.getElementById('yearSelect').value;
         const month = document.getElementById('monthSelect').value;
         const filterYear = document.getElementById('yearFilter').value;
         const daysInMonth = new Date(year, month, 0).getDate();
 
-        if(!confirm(`確定要產生 ${month} 月的自動排班嗎？(現有資料將被清除)`)) return;
+        if(!confirm(`確定要產生 ${year}年 ${month} 月的自動排班嗎？\n(將會清除當月所有的現有排班資料)`)) return;
 
-        // 清除當月
         for(let key in state.schedule) {
             if(key.startsWith(`${year}-${month}-`)) delete state.schedule[key];
         }
 
         const activeDocs = state.doctors.filter(d => d.year === filterYear);
-        if(activeDocs.length === 0) return alert("沒有符合學年度的醫師！");
+        if(activeDocs.length === 0) return alert("目前學年度沒有名單，無法排班！");
 
-        // 隨機算法 (僅為 Demo，實務上需更嚴謹的限制運算)
         state.units.forEach(u => {
             const allowedDocs = activeDocs.filter(d => u.ranks.includes(d.rank));
             if(allowedDocs.length === 0) return;
 
             for(let d=1; d<=daysInMonth; d++) {
                 const slotId = `${year}-${month}-${d}-${u.name}`;
-                // 檢查該醫師當天是否已在別處值班
                 let assigned = false;
                 let attempts = 0;
                 while(!assigned && attempts < 10) {
@@ -497,18 +528,17 @@
             }
         });
 
-        addLog(`⚡ 一鍵排班完成 (${month}月)`);
+        addLog(`⚡ 一鍵自動排班完成 (${year}年${month}月)`);
         updateView();
     }
 
-    // ==================== 7. 統計與輔助 (完整邏輯) ====================
+    // ==================== 7. 統計與匯出 ====================
     function renderStats() {
         const year = document.getElementById('yearSelect').value;
         const month = document.getElementById('monthSelect').value;
         const filterYear = document.getElementById('yearFilter').value;
         const activeDocs = state.doctors.filter(d => d.year === filterYear);
 
-        // 計算
         let totalShifts = 0;
         let docCounts = {};
         activeDocs.forEach(d => docCounts[d.name] = 0);
@@ -523,20 +553,18 @@
             }
         }
 
-        // 摘要卡片
         document.getElementById('statSummary').innerHTML = `
-            <div class="stat-card"><span class="stat-value">${activeDocs.length}</span>醫師人數</div>
-            <div class="stat-card"><span class="stat-value">${totalShifts}</span>總值班次</div>
-            <div class="stat-card"><span class="stat-value">${activeDocs.length ? (totalShifts/activeDocs.length).toFixed(1) : 0}</span>平均天數</div>
+            <div class="stat-card"><span class="stat-value">${activeDocs.length}</span>總活躍醫師數</div>
+            <div class="stat-card"><span class="stat-value">${totalShifts}</span>本月總班次</div>
+            <div class="stat-card"><span class="stat-value">${activeDocs.length ? (totalShifts/activeDocs.length).toFixed(1) : 0}</span>平均值班天數</div>
         `;
 
-        // 矩陣表格
-        let matrix = `<table class="matrix-table"><thead><tr><th>醫師 \\ 單位</th>`;
+        let matrix = `<table class="matrix-table"><thead><tr><th style="min-width:100px;">醫師 \\ 單位</th>`;
         state.units.forEach(u => matrix += `<th>${u.name}</th>`);
         matrix += `<th>總計</th></tr></thead><tbody>`;
 
         activeDocs.forEach(d => {
-            matrix += `<tr><td style="font-weight:bold;">${d.name} (${d.rank})</td>`;
+            matrix += `<tr><td style="font-weight:bold; text-align:left; padding-left:10px;">${d.name} (${d.rank})</td>`;
             let dSum = 0;
             state.units.forEach(u => {
                 let uSum = 0;
@@ -546,49 +574,17 @@
                 matrix += `<td>${uSum || '-'}</td>`;
                 dSum += uSum;
             });
-            matrix += `<td style="color:var(--primary); font-weight:bold;">${dSum}</td></tr>`;
+            matrix += `<td style="color:var(--primary); font-weight:bold; font-size:14px;">${dSum}</td></tr>`;
         });
         document.getElementById('matrixContainer').innerHTML = matrix + '</tbody></table>';
-    }
-
-    function renderRankWeights() {
-        document.getElementById('rankWeightContainer').innerHTML = Object.keys(state.rankWeights).map(r => `
-            <div class="stat-card">
-                <span style="font-weight:bold;">${r}</span><br>
-                <input type="number" value="${state.rankWeights[r]}" style="width:60px; text-align:center;" 
-                       onchange="state.rankWeights['${r}']=parseInt(this.value); save();"> 天
-            </div>
-        `).join('');
-    }
-
-    // ==================== 8. 工具函式 ====================
-    function save() {
-        localStorage.setItem('med_units_v35', JSON.stringify(state.units));
-        localStorage.setItem('med_docs_v35', JSON.stringify(state.doctors));
-        localStorage.setItem('med_sched_v35', JSON.stringify(state.schedule));
-        localStorage.setItem('med_weights_v35', JSON.stringify(state.rankWeights));
-    }
-
-    function addLog(msg) {
-        state.logs.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
-        if(state.logs.length > 100) state.logs.pop();
-    }
-
-    function toggleLogModal() {
-        document.getElementById('logBody').innerHTML = state.logs.join('<br>');
-        document.getElementById('modalOverlay').style.display = 'block';
-        document.getElementById('logModal').style.display = 'block';
-    }
-
-    function closeModals() {
-        document.querySelectorAll('.modal, .modal-overlay').forEach(m => m.style.display = 'none');
     }
 
     function exportCSV() {
         const year = document.getElementById('yearSelect').value;
         const month = document.getElementById('monthSelect').value;
         const days = new Date(year, month, 0).getDate();
-        let csv = "\uFEFF單位/日期," + Array.from({length:days}, (_,i)=>i+1).join(",") + "\n";
+        
+        let csv = `\uFEFF單位/日期,` + Array.from({length:days}, (_,i)=>`${month}/${i+1}`).join(",") + "\n";
         
         state.units.forEach(u => {
             let row = u.name;
@@ -601,8 +597,32 @@
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `Schedule_${year}_${month}.csv`;
+        link.download = `內科班表_${year}年${month}月.csv`;
         link.click();
+    }
+
+    // ==================== 8. 儲存與介面輔助 ====================
+    function save() {
+        localStorage.setItem('med_units_v36', JSON.stringify(state.units));
+        localStorage.setItem('med_docs_v36', JSON.stringify(state.doctors));
+        localStorage.setItem('med_sched_v36', JSON.stringify(state.schedule));
+        localStorage.setItem('med_logs_v36', JSON.stringify(state.logs));
+    }
+
+    function addLog(msg) {
+        state.logs.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
+        if(state.logs.length > 50) state.logs.pop();
+        save();
+    }
+
+    function toggleLogModal() {
+        document.getElementById('logBody').innerHTML = state.logs.length ? state.logs.join('<br><br>') : '目前尚無紀錄';
+        document.getElementById('modalOverlay').style.display = 'block';
+        document.getElementById('logModal').style.display = 'block';
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.modal, .modal-overlay').forEach(m => m.style.display = 'none');
     }
 </script>
 </body>
